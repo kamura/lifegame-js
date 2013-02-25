@@ -22,40 +22,42 @@
         var columnSize = 50;
         var duration_msec = 400;
         var canceled = false;
+        ///////////// Cell class ///////////////////////////////////////
         var Cell = function(isAlive) {
             this.isAlive = isAlive;
             this.isNextGenerationAlive = false;
-            this.prepareNextGeneration = function(neighbourCells) {
-                var aliveNeighbourCellCount = countAliveCells(neighbourCells);
-                if (this.isAlive) {
-                    if (aliveNeighbourCellCount != 2 && aliveNeighbourCellCount != 3) {
-                        this.isNextGenerationAlive = false;
-                    } else {
-                        this.isNextGenerationAlive = true;
-                    }
+        };
+        Cell.prototype.prepareNextGeneration = function(neighbourCells) {
+            var aliveNeighbourCellCount = countAliveCells(neighbourCells);
+            if (this.isAlive) {
+                if (aliveNeighbourCellCount != 2 && aliveNeighbourCellCount != 3) {
+                    this.isNextGenerationAlive = false;
                 } else {
-                    if (aliveNeighbourCellCount == 3) {
-                        this.isNextGenerationAlive = true;
-                    } else {
-                        this.isNextGenerationAlive = false;
-                    }
+                    this.isNextGenerationAlive = true;
                 }
-                function countAliveCells(cells) {
-                    var count = 0;
-                    cells.forEach(function(cell) {
-                        if (cell.isAlive) count++;
-                    });
-                    return count;
+            } else {
+                if (aliveNeighbourCellCount == 3) {
+                    this.isNextGenerationAlive = true;
+                } else {
+                    this.isNextGenerationAlive = false;
                 }
             }
-            this.gotoNextGeneration = function() {
-                if (this.isNextGenerationAlive) {
-                    this.isAlive = true;
-                } else {
-                    this.isAlive = false;
-                }
+            function countAliveCells(cells) {
+                var count = 0;
+                cells.forEach(function(cell) {
+                    if (cell.isAlive) count++;
+                });
+                return count;
             }
         };
+        Cell.prototype.gotoNextGeneration = function() {
+            if (this.isNextGenerationAlive) {
+                this.isAlive = true;
+            } else {
+                this.isAlive = false;
+            }
+        };
+        ///////////// CellGrid class ///////////////////////////////////////
         var CellGrid = function(rowSize, columnSize) {
             this.rowSize = rowSize;
             this.columnSize = columnSize;
@@ -128,6 +130,7 @@
 
             this.createRandomGrid();
         };
+        /////////////////////////////////////////////////////////////////////////////
 
 
         var cellGrid = new CellGrid(rowSize, columnSize);
@@ -147,7 +150,7 @@
                     ctx.fillStyle = 'rgb(255, 255, 255)';
                 }
                 ctx.fillRect(cellWidth * column, cellHeight * row, cellWidth, cellHeight);
-                ctx.strokeStyle = 'rgb(100, 100, 100)';
+                ctx.strokeStyle = 'rgb(150, 150, 150)';
                 ctx.strokeRect(cellWidth * column, cellHeight * row, cellWidth, cellHeight);
             });
             ctx.closePath();

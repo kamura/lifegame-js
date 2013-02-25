@@ -31,13 +31,13 @@
             this.prepareNextGeneration = function(neighbourCells) {
                 var aliveNeighbourCellCount = countAliveCells(neighbourCells);
                 if (this.isAlive) {
-                    if (aliveNeighbourCellCount != 2 && aliveNeighbourCellCount != 3) {
+                    if (aliveNeighbourCellCount !== 2 && aliveNeighbourCellCount !== 3) {
                         this.isNextGenerationAlive = false;
                     } else {
                         this.isNextGenerationAlive = true;
                     }
                 } else {
-                    if (aliveNeighbourCellCount == 3) {
+                    if (aliveNeighbourCellCount === 3) {
                         this.isNextGenerationAlive = true;
                     } else {
                         this.isNextGenerationAlive = false;
@@ -47,18 +47,20 @@
                 function countAliveCells(cells) {
                     var count = 0;
                     cells.forEach(function(cell) {
-                        if (cell.isAlive) count++;
+                        if (cell.isAlive) {
+                            count++;
+                        }
                     });
                     return count;
                 }
-            }
+            };
             this.gotoNextGeneration = function() {
                 if (this.isNextGenerationAlive) {
                     this.isAlive = true;
                 } else {
                     this.isAlive = false;
                 }
-            }
+            };
         };
         var CellGrid = function(rowSize, columnSize) {
             this.rowSize = rowSize;
@@ -67,14 +69,14 @@
             this.generation = 0;
             this.getCell = function(row, column) {
                 return cellArray[row][column];
-            }
+            };
             this.createRandomGrid = function() {
                 this.generation = 0;
                 for (var row = 0; row < rowSize; row++) {
                     var rowArray = [];
                     for (var column = 0; column < columnSize; column++) {
                         var oneOrZero = Math.floor(Math.random() * 2.0);
-                        if (oneOrZero == 1) {
+                        if (oneOrZero === 1) {
                             rowArray[column] = new Cell(true);
                         } else {
                             rowArray[column] = new Cell(false);
@@ -82,16 +84,16 @@
                     }
                     this.cellArray[row] = rowArray;
                 }
-            }
+            };
             this.reset = function() {
                 this.createRandomGrid();
-            }
+            };
             this.getCell = function(row, column) {
                 return this.cellArray[row][column];
-            }
+            };
             this.getGeneration = function() {
                 return this.generation;
-            }
+            };
             this.getNeighbourCells = function(targetRow, targetColumn) {
                 var neighbourCells = [];
                 var minRow = Math.max(0, targetRow - 1);
@@ -100,13 +102,15 @@
                 var maxColumn = Math.min(columnSize - 1, targetColumn + 1);
                 for (var row = minRow; row <= maxRow; row++) {
                     for (var column = minColumn; column <= maxColumn; column++) {
-                        if (row == targetRow && column == targetColumn) continue;
+                        if (row === targetRow && column === targetColumn) {
+                            continue;
+                        }
                         var cell = this.getCell(row, column);
                         neighbourCells.push(cell);
                     }
                 }
                 return neighbourCells;
-            }
+            };
             this.forEach = function(func) {
                 for (var row = 0; row < rowSize; row++) {
                     for (var column = 0; column < columnSize; column++) {
@@ -114,20 +118,20 @@
                         func(cell, row, column);
                     }
                 }
-            }
+            };
             this.prepareNextGeneration = function() {
                 var thisCellGrid = this;
                 this.forEach(function(cell, row, column) {
                     var neighbourCells = thisCellGrid.getNeighbourCells(row, column);
                     cell.prepareNextGeneration(neighbourCells);
                 });
-            }
+            };
             this.gotoNextGeneration = function() {
                 this.forEach(function(cell, row, column) {
                     cell.gotoNextGeneration();
                 });
                 this.generation++;
-            }
+            };
 
 
             this.createRandomGrid();
@@ -162,7 +166,9 @@
         }
 
         function tick() {
-            if (canceled) return;
+            if (canceled) {
+                return;
+            }
 
             cellGrid.prepareNextGeneration();
             cellGrid.gotoNextGeneration();
