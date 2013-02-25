@@ -1,0 +1,180 @@
+<!DOCTYPE HTML>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Lifegame</title>
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+    <h1>Lifegame</h1>
+    <input type="button" value="Start" id="start_button" onclick="start();">
+    <input type="button" value="Stop" id="stop_button" onclick="stop();">
+    <input type="button" value="Reset" id="reset_button" onclick="reset();">
+    Generation: <span id="generation">0</span>
+    <div>
+        <canvas id="cell_grid" width="700" height="500"></canvas>
+    </div>
+
+    <script>
+        var gridCanvasWidth = 700;
+        var gridCanvasHeight = 500;
+        var rowSize = 30;
+        var columnSize = 50;
+        var duration_msec = 400;
+        var canceled = false;
+        var Cell = function(isAlive) {
+            this.isAlive = isAlive;
+            this.isNextGenerationAlive = false;
+            this.prepareNextGeneration = function(neighbourCells) {
+                var aliveNeighbourCellCount = countAliveCells(neighbourCells);
+                if (this.isAlive) {
+                    if (aliveNeighbourCellCount != 2 && aliveNeighbourCellCount != 3) {
+                        this.isNextGenerationAlive = false;
+                    } else {
+                        this.isNextGenerationAlive = true;
+                    }
+                } else {
+                    if (aliveNeighbourCellCount == 3) {
+                        this.isNextGenerationAlive = true;
+                    } else {
+                        this.isNextGenerationAlive = false;
+                    }
+                }
+                function countAliveCells(cells) {
+                    var count = 0;
+                    cells.forEach(function(cell) {
+                        if (cell.isAlive) count++;
+                    });
+                    return count;
+                }
+            }
+            this.gotoNextGeneration = function() {
+                if (this.isNextGenerationAlive) {
+                    this.isAlive = true;
+                } else {
+                    this.isAlive = false;
+                }
+            }
+        };
+        var CellGrid = function(rowSize, columnSize) {
+            this.rowSize = rowSize;
+            this.columnSize = columnSize;
+            this.cellArray = [];
+            this.generation = 0;
+            this.getCell = function(row, column) {
+                return cellArray[row][column];
+            }
+            this.createRandomGrid = function() {
+                this.generation = 0;
+                for (var row = 0; row < rowSize; row++) {
+                    var rowArray = [];
+                    for (var column = 0; column < columnSize; column++) {
+                        var oneOrZero = Math.floor(Math.random() * 2.0);
+                        if (oneOrZero == 1) {
+                            rowArray[column] = new Cell(true);
+                        } else {
+                            rowArray[column] = new Cell(false);
+                        }
+                    }
+                    this.cellArray[row] = rowArray;
+                }
+            }
+            this.reset = function() {
+                this.createRandomGrid();
+            }
+            this.getCell = function(row, column) {
+                return this.cellArray[row][column];
+            }
+            this.getGeneration = function() {
+                return this.generation;
+            }
+            this.getNeighbourCells = function(targetRow, targetColumn) {
+                var neighbourCells = [];
+                var minRow = Math.max(0, targetRow - 1);
+                var minColumn = Math.max(0, targetColumn - 1);
+                var maxRow = Math.min(rowSize - 1, targetRow + 1);
+                var maxColumn = Math.min(columnSize - 1, targetColumn + 1);
+                for (var row = minRow; row <= maxRow; row++) {
+                    for (var column = minColumn; column <= maxColumn; column++) {
+                        if (row == targetRow && column == targetColumn) continue;
+                        var cell = this.getCell(row, column);
+                        neighbourCells.push(cell);
+                    }
+                }
+                return neighbourCells;
+            }
+            this.forEach = function(func) {
+                for (var row = 0; row < rowSize; row++) {
+                    for (var column = 0; column < columnSize; column++) {
+                        var cell = cellGrid.getCell(row, column);
+                        func(cell, row, column);
+                    }
+                }
+            }
+            this.prepareNextGeneration = function() {
+                var thisCellGrid = this;
+                this.forEach(function(cell, row, column) {
+                    var neighbourCells = thisCellGrid.getNeighbourCells(row, column);
+                    cell.prepareNextGeneration(neighbourCells);
+                });
+            }
+            this.gotoNextGeneration = function() {
+                this.forEach(function(cell, row, column) {
+                    cell.gotoNextGeneration();
+                });
+                this.generation++;
+            }
+
+
+            this.createRandomGrid();
+        };
+
+
+        var cellGrid = new CellGrid(rowSize, columnSize);
+        updateCellGridView();
+
+        function updateCellGridView() {
+            var canvas = document.getElementById('cell_grid');
+            if (!canvas || !canvas.getContext) return;
+            var ctx = canvas.getContext('2d');
+            var cellWidth = gridCanvasWidth / columnSize;
+            var cellHeight = gridCanvasHeight / rowSize;
+            ctx.beginPath();
+            cellGrid.forEach(function(cell, row, column) {
+                if (cell.isAlive) {
+                    ctx.fillStyle = 'rgb(70, 70, 255)';
+                } else {
+                    ctx.fillStyle = 'rgb(255, 255, 255)';
+                }
+                ctx.fillRect(cellWidth * column, cellHeight * row, cellWidth, cellHeight);
+                ctx.strokeStyle = 'rgb(100, 100, 100)';
+                ctx.strokeRect(cellWidth * column, cellHeight * row, cellWidth, cellHeight);
+            });
+            ctx.closePath();
+            $('#generation').text('' + cellGrid.getGeneration());
+        }
+        function tick() {
+            if (canceled) return;
+
+            cellGrid.prepareNextGeneration();
+            cellGrid.gotoNextGeneration();
+            updateCellGridView();
+            setTimeout(function() { tick(); }, duration_msec);
+        }
+        function start() {
+            canceled = false;
+            tick();
+            $('#start_button').prop('disabled', true);
+        }
+        function stop() {
+            canceled = true;
+            $('#start_button').prop('disabled', false);
+        }
+        function reset() {
+            stop();
+            cellGrid.reset();
+            updateCellGridView();
+        }
+    </script>
+</body>
+</html>
