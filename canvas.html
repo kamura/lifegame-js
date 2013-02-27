@@ -7,55 +7,49 @@
 </head>
 <body>
     <h1>Lifegame</h1>
-    <input type="button" value="Start" id="start_button" onclick="start();">
-    <input type="button" value="Stop" id="stop_button" onclick="stop();">
-    <input type="button" value="Reset" id="reset_button" onclick="reset();">
+    <input type="button" value="Start" id="start_button" onclick="lifegame.start();">
+    <input type="button" value="Stop" id="stop_button" onclick="lifegame.stop();">
+    <input type="button" value="Reset" id="reset_button" onclick="lifegame.reset();">
     Generation: <span id="generation">0</span>
     <div>
         <canvas id="cell_grid" width="700" height="500"></canvas>
     </div>
 
     <script>
-        var gridCanvasWidth = 700;
-        var gridCanvasHeight = 500;
-        var rowSize = 30;
-        var columnSize = 50;
-        var duration_msec = 400;
-        var canceled = false;
         ///////////// Cell class ///////////////////////////////////////
         var Cell = function(isAlive) {
             this.isAlive = isAlive;
             this.isNextGenerationAlive = false;
-        };
-        Cell.prototype.prepareNextGeneration = function(neighbourCells) {
-            var aliveNeighbourCellCount = countAliveCells(neighbourCells);
-            if (this.isAlive) {
-                if (aliveNeighbourCellCount != 2 && aliveNeighbourCellCount != 3) {
-                    this.isNextGenerationAlive = false;
+            Cell.prototype.prepareNextGeneration = function(neighbourCells) {
+                var aliveNeighbourCellCount = countAliveCells(neighbourCells);
+                if (this.isAlive) {
+                    if (aliveNeighbourCellCount !== 2 && aliveNeighbourCellCount !== 3) {
+                        this.isNextGenerationAlive = false;
+                    } else {
+                        this.isNextGenerationAlive = true;
+                    }
                 } else {
-                    this.isNextGenerationAlive = true;
+                    if (aliveNeighbourCellCount === 3) {
+                        this.isNextGenerationAlive = true;
+                    } else {
+                        this.isNextGenerationAlive = false;
+                    }
                 }
-            } else {
-                if (aliveNeighbourCellCount == 3) {
-                    this.isNextGenerationAlive = true;
+                function countAliveCells(cells) {
+                    var count = 0;
+                    cells.forEach(function(cell) {
+                        if (cell.isAlive) { count++; }
+                    });
+                    return count;
+                }
+            };
+            Cell.prototype.gotoNextGeneration = function() {
+                if (this.isNextGenerationAlive) {
+                    this.isAlive = true;
                 } else {
-                    this.isNextGenerationAlive = false;
+                    this.isAlive = false;
                 }
-            }
-            function countAliveCells(cells) {
-                var count = 0;
-                cells.forEach(function(cell) {
-                    if (cell.isAlive) count++;
-                });
-                return count;
-            }
-        };
-        Cell.prototype.gotoNextGeneration = function() {
-            if (this.isNextGenerationAlive) {
-                this.isAlive = true;
-            } else {
-                this.isAlive = false;
-            }
+            };
         };
         ///////////// CellGrid class ///////////////////////////////////////
         var CellGrid = function(rowSize, columnSize) {
@@ -63,16 +57,18 @@
             this.columnSize = columnSize;
             this.cellArray = [];
             this.generation = 0;
-            this.getCell = function(row, column) {
+            CellGrid.prototype.getCell = function(row, column) {
                 return cellArray[row][column];
-            }
-            this.createRandomGrid = function() {
+            };
+            CellGrid.prototype.createRandomGrid = function() {
+                var row;
+                var column;
                 this.generation = 0;
-                for (var row = 0; row < rowSize; row++) {
+                for (row = 0; row < rowSize; row++) {
                     var rowArray = [];
-                    for (var column = 0; column < columnSize; column++) {
+                    for (column = 0; column < columnSize; column++) {
                         var oneOrZero = Math.floor(Math.random() * 2.0);
-                        if (oneOrZero == 1) {
+                        if (oneOrZero === 1) {
                             rowArray[column] = new Cell(true);
                         } else {
                             rowArray[column] = new Cell(false);
@@ -80,104 +76,120 @@
                     }
                     this.cellArray[row] = rowArray;
                 }
-            }
-            this.reset = function() {
+            };
+            CellGrid.prototype.reset = function() {
                 this.createRandomGrid();
-            }
-            this.getCell = function(row, column) {
+            };
+            CellGrid.prototype.getCell = function(row, column) {
                 return this.cellArray[row][column];
-            }
-            this.getGeneration = function() {
+            };
+            CellGrid.prototype.getGeneration = function() {
                 return this.generation;
-            }
-            this.getNeighbourCells = function(targetRow, targetColumn) {
+            };
+            CellGrid.prototype.getNeighbourCells = function(targetRow, targetColumn) {
                 var neighbourCells = [];
                 var minRow = Math.max(0, targetRow - 1);
                 var minColumn = Math.max(0, targetColumn - 1);
                 var maxRow = Math.min(rowSize - 1, targetRow + 1);
                 var maxColumn = Math.min(columnSize - 1, targetColumn + 1);
-                for (var row = minRow; row <= maxRow; row++) {
-                    for (var column = minColumn; column <= maxColumn; column++) {
-                        if (row == targetRow && column == targetColumn) continue;
+                var row;
+                var column;
+                for (row = minRow; row <= maxRow; row++) {
+                    for (column = minColumn; column <= maxColumn; column++) {
+                        if (row === targetRow && column === targetColumn) continue;
                         var cell = this.getCell(row, column);
                         neighbourCells.push(cell);
                     }
                 }
                 return neighbourCells;
-            }
-            this.forEach = function(func) {
-                for (var row = 0; row < rowSize; row++) {
-                    for (var column = 0; column < columnSize; column++) {
-                        var cell = cellGrid.getCell(row, column);
+            };
+            CellGrid.prototype.forEach = function(func) {
+                var row;
+                var column;
+                for (row = 0; row < rowSize; row++) {
+                    for (column = 0; column < columnSize; column++) {
+                        var cell = this.getCell(row, column);
                         func(cell, row, column);
                     }
                 }
-            }
-            this.prepareNextGeneration = function() {
+            };
+            CellGrid.prototype.prepareNextGeneration = function() {
                 var thisCellGrid = this;
                 this.forEach(function(cell, row, column) {
                     var neighbourCells = thisCellGrid.getNeighbourCells(row, column);
                     cell.prepareNextGeneration(neighbourCells);
                 });
-            }
-            this.gotoNextGeneration = function() {
+            };
+            CellGrid.prototype.gotoNextGeneration = function() {
                 this.forEach(function(cell, row, column) {
                     cell.gotoNextGeneration();
                 });
                 this.generation++;
-            }
+            };
 
 
             this.createRandomGrid();
         };
         /////////////////////////////////////////////////////////////////////////////
+        var Lifegame = function() {
+            this.gridCanvasWidth = 700;
+            this.gridCanvasHeight = 500;
+            this.rowSize = 30;
+            this.columnSize = 50;
+            this.duration_msec = 200;
+            this.canceled = false;
 
 
-        var cellGrid = new CellGrid(rowSize, columnSize);
-        updateCellGridView();
+            Lifegame.prototype.updateCellGridView = function() {
+                var canvas = $('#cell_grid')[0];
+                if (!canvas || !canvas.getContext) return;
+                var ctx = canvas.getContext('2d');
+                var cellWidth = this.gridCanvasWidth / this.columnSize;
+                var cellHeight = this.gridCanvasHeight / this.rowSize;
+                ctx.beginPath();
+                this.cellGrid.forEach(function(cell, row, column) {
+                    if (cell.isAlive) {
+                        ctx.fillStyle = 'rgb(70, 70, 255)';
+                    } else {
+                        ctx.fillStyle = 'rgb(255, 255, 255)';
+                    }
+                    ctx.fillRect(cellWidth * column, cellHeight * row, cellWidth, cellHeight);
+                    ctx.strokeStyle = 'rgb(150, 150, 150)';
+                    ctx.strokeRect(cellWidth * column, cellHeight * row, cellWidth, cellHeight);
+                });
+                ctx.closePath();
+                $('#generation').text('' + this.cellGrid.getGeneration());
+            };
+            Lifegame.prototype.tick = function() {
+                if (this.canceled) return;
 
-        function updateCellGridView() {
-            var canvas = document.getElementById('cell_grid');
-            if (!canvas || !canvas.getContext) return;
-            var ctx = canvas.getContext('2d');
-            var cellWidth = gridCanvasWidth / columnSize;
-            var cellHeight = gridCanvasHeight / rowSize;
-            ctx.beginPath();
-            cellGrid.forEach(function(cell, row, column) {
-                if (cell.isAlive) {
-                    ctx.fillStyle = 'rgb(70, 70, 255)';
-                } else {
-                    ctx.fillStyle = 'rgb(255, 255, 255)';
-                }
-                ctx.fillRect(cellWidth * column, cellHeight * row, cellWidth, cellHeight);
-                ctx.strokeStyle = 'rgb(150, 150, 150)';
-                ctx.strokeRect(cellWidth * column, cellHeight * row, cellWidth, cellHeight);
-            });
-            ctx.closePath();
-            $('#generation').text('' + cellGrid.getGeneration());
-        }
-        function tick() {
-            if (canceled) return;
+                this.cellGrid.prepareNextGeneration();
+                this.cellGrid.gotoNextGeneration();
+                this.updateCellGridView();
+                _this = this;
+                setTimeout(function() { _this.tick(); }, this.duration_msec);
+            };
+            Lifegame.prototype.start = function() {
+                this.canceled = false;
+                this.tick();
+                $('#start_button').prop('disabled', true);
+            };
+            Lifegame.prototype.stop = function() {
+                this.canceled = true;
+                $('#start_button').prop('disabled', false);
+            };
+            Lifegame.prototype.reset = function() {
+                this.stop();
+                this.cellGrid.reset();
+                this.updateCellGridView();
+            };
 
-            cellGrid.prepareNextGeneration();
-            cellGrid.gotoNextGeneration();
-            updateCellGridView();
-            setTimeout(function() { tick(); }, duration_msec);
-        }
-        function start() {
-            canceled = false;
-            tick();
-            $('#start_button').prop('disabled', true);
-        }
-        function stop() {
-            canceled = true;
-            $('#start_button').prop('disabled', false);
-        }
-        function reset() {
-            stop();
-            cellGrid.reset();
-            updateCellGridView();
-        }
+            this.cellGrid = new CellGrid(this.rowSize, this.columnSize);
+            this.updateCellGridView();
+        };
+
+        var lifegame = new Lifegame();
     </script>
 </body>
 </html>
+
