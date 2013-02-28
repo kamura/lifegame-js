@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <title>Lifegame</title>
     <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <style>
+        #cell_grid {
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <h1>Lifegame</h1>
@@ -130,7 +135,7 @@
 
             this.createRandomGrid();
         };
-        /////////////////////////////////////////////////////////////////////////////
+        ///////////// Lifegame class ///////////////////////////////////////
         var Lifegame = function() {
             this.gridCanvasWidth = 700;
             this.gridCanvasHeight = 500;
@@ -187,8 +192,22 @@
             this.cellGrid = new CellGrid(this.rowSize, this.columnSize);
             this.updateCellGridView();
         };
+        /////////////////////////////////////////////////////////////////////////////
 
         var lifegame = new Lifegame();
+        //make it clickable
+        $('#cell_grid').on('click', function(e) {
+            var rect = e.target.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var cellWidth = lifegame.gridCanvasWidth / lifegame.columnSize;
+            var cellHeight = lifegame.gridCanvasHeight / lifegame.rowSize;
+            var row = Math.floor(y / cellHeight);
+            var column = Math.floor(x / cellWidth);
+            cell = lifegame.cellGrid.getCell(row, column);
+            cell.isAlive = ! cell.isAlive;
+            lifegame.updateCellGridView();
+        });
     </script>
 </body>
 </html>
